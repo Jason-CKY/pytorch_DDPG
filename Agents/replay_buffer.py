@@ -38,7 +38,21 @@ class ReplayBuffer:
             A list of transition tuples including state, action, reward, terminal, and next state
         '''
         idxs = self.rand_generator.choice(np.arange(len(self.buffer)), size=self.minibatch_size)
-        return [self.buffer[idx] for idx in idxs]
+        sample = [self.buffer[idx] for idx in idxs]
+        states = []
+        actions = []
+        rewards = []
+        terminals = []
+        next_states = []
+        for experience in sample:
+            state, action, reward, terminal, next_state = experience
+            states.append(state)
+            actions.append(action)
+            rewards.append([reward])
+            terminals.append([terminal])
+            next_states.append(next_state)
+        
+        return states, actions, rewards, terminals, next_states
 
     def size(self):
         return len(self.buffer)
