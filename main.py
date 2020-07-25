@@ -35,17 +35,15 @@ def run_experiment(environment, agent, environment_parameters, agent_parameters,
             episode_reward = rl_glue.rl_agent_message("get_sum_reward")
             agent_sum_reward[run - 1, episode - 1] = episode_reward
 
-    save_name = "{}".format(rl_glue.agent.name)
+            if episode % experiment_parameters['checkpoint_freq'] == 0:
+                rl_glue.agent.save_checkpoint(episode)
 
-    os.makedirs(experiment_parameters['result_dir'], exist_ok=True)
-    os.makedirs(os.path.sep.join(experiment_parameters['model_weights_save_path'].split(os.path.sep)[:-1]), exist_ok=True)
-    
-    path = os.path.join(experiment_parameters['result_dir'], "sum_reward_{}".format(save_name))
-    torch.save(rl_glue.agent.network.state_dict(), experiment_parameters['model_weights_save_path'])
+    save_name = "{}".format(rl_glue.agent.name)    
+    path = os.path.join("sum_reward_{}".format(save_name))
     np.save(path, agent_sum_reward)
     x = np.load(path)
     plt.plot(np.arange(experiment_parameters['num_episodes']), x[0])
-    plt.savefig(f'{experiment_parameters['result_dir']}{os.path.sep}sum_rewards.png')
+    plt.savefig(f'sum_rewards.png')
 
 def main():
     # Run Experiment
@@ -54,10 +52,11 @@ def main():
     experiment_parameters = {
         "num_runs" : 1,
         "num_episodes" : 500,
+        "checkpoint_freq": 100,
+        "load_checkpoint": None,    # None to start new experiment, path to checkpoint to resume training
         # OpenAI Gym environments allow for a timestep limit timeout, causing episodes to end after 
         # some number of timesteps.
-        "timeout" : 2000,
-        "result_dir": "results"
+        "timeout" : 2000
     }
 
     # Environment parameters
@@ -86,7 +85,8 @@ def main():
         'replay_buffer_size': 50000,
         'minibatch_size': 8,
         'num_replay_updates_per_step': 4,
-        'gamma': 0.99
+        'gamma': 0.99,
+        'checkpoint_dir': 'model_weights'
     }
     current_agent = Agent
     agent_parameters = update_agent_parameters(current_env(), agent_parameters)

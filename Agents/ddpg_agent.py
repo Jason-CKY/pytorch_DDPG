@@ -6,6 +6,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch
 import numpy as np
+import os
 
 class DDPG_Agent(BaseAgent):
     def __init__(self):
@@ -61,6 +62,9 @@ class DDPG_Agent(BaseAgent):
             self.checkpoint_dir = 'saved_models'
         else:
             self.checkpoint_dir = checkpoint_dir
+        
+        if not os.path.isdir(self.checkpoint_dir):
+            os.makedirs(self.checkpoint_dir)
 
     def optimize_network(self, experiences):
         """
@@ -68,6 +72,7 @@ class DDPG_Agent(BaseAgent):
             experiences (Numpy array): The batch of experiences including the states, actions, 
                                     rewards, terminals, and next_states.
         """
+        self.set_train()
         # Get states, action, rewards, terminals, and next_states from experiences
         states, actions, rewards, terminals, next_states = experiences
         states = torch.tensor(states).to(self.device).float()
@@ -109,6 +114,7 @@ class DDPG_Agent(BaseAgent):
         if state is in the shape [n, state_dim], output will be [n, action_dim]
         if state is in the shape [state_dim], output will be [action_dim]
         """
+        self.set_eval()
         state = torch.tensor(state).to(self.device).float()
         if state.dim() == 1:
             state = state.unsqueeze(0)
@@ -225,4 +231,58 @@ class DDPG_Agent(BaseAgent):
         self.actor_target.eval()
         self.critic.eval()
         self.critic_target.eval()
+    
+    def save_checkpoint(self, episode_num):
+        """Saving networks and optimizer paramters to a file in 'checkpoint_dir'
+        Args:
+            episode_num: episode number of the current session
+        """
+        checkpoint_name = os.path.join(self.checkpoint_dir, f"ep_{episode_num}_step_{self.epsiode_steps}.pt")
+        print('saving checkpoint...')
+        checkpoint = {
+            'actor': self.actor.state_dict(),
+            'actor_target': self.actor_target.state_dict(),
+            'actor_optimizer': self.actor_optimizer.state_dict(),
+            'critic': self.critic.state_dict(),
+            'critic_target': self.critic_target.state_dict(),
+            'critic_optimizer': self.critic_optimizer.state_dict()
+        }
+        torch.save(checkpoint, checkpoint_name)
+        print(f"checkpoint saved at {checkpoint_name}")
+    
+    def get_latest_path(self):
+        """
+        get the latest created file in the checkpoint directory
+        Returns:
+            the latest saved model weights
+        """
+        files = [fname for fname in os.listdir(self.checkpoint_dir) if fname.endswith(".pt")]
+        filepaths = [os.path.join(self.checkpoint_dir, filepath) for filepath in files]
+        latest_file = max(filepaths, key=os.path.getctime)
+        return latest_file
         
+    def load_checkpoint(self, checkpoint_path=None):
+        """
+        load networks and optimizer paramters from checkpoint_path
+        if checkpoint_path is None, use the latest created path from checkpoint_dir
+        Args:
+            checkpoint_path: path to checkpoint
+        """
+        if checkpoint_path is None:
+            checkpoint_path = self.get_latest_path()
+
+        if os.path.isfile(checkpoint_path):
+            key = 'cuda' if torch.cuda.is_available() else 'cpu'
+            checkpoint = torch.load(checkpoint_path, map_location=key)
+            self.actor.load_state_dict(checkpoint['actor'])
+            self.actor_target.load_state_dict(checkpoint['actor_target'])
+            self.actor_optimizer.load_state_dict(checkpoint['actor_optimizer'])
+
+            self.critic.load_state_dict(checkpoint['critic'])
+            self.critic_target.load_state_dict(checkpoint['critic_target'])
+            self.critic_optimizer.load_state_dict(checkpoint['critic_optimizer'])
+
+            print('checkpoint loaded')
+        else:
+            raise OSError("Checkpoint file not found.")    
+
