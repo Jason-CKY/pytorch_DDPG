@@ -55,7 +55,7 @@ class DDPG_Agent(BaseAgent):
         self.last_action = None
 
         self.sum_rewards = 0
-        self.epsiode_steps = 0
+        self.episode_steps = 0
 
         checkpoint_dir = agent_config.get('checkpoint_dir')
         if checkpoint_dir is None:
@@ -237,7 +237,7 @@ class DDPG_Agent(BaseAgent):
         Args:
             episode_num: episode number of the current session
         """
-        checkpoint_name = os.path.join(self.checkpoint_dir, f"ep_{episode_num}_step_{self.epsiode_steps}.pt")
+        checkpoint_name = os.path.join(self.checkpoint_dir, f"ep_{episode_num}_step_{self.episode_steps}.pt")
         print('saving checkpoint...')
         checkpoint = {
             'actor': self.actor.state_dict(),

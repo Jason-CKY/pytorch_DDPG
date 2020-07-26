@@ -1,12 +1,31 @@
 # from Environments.lunar_lander import LunarLanderEnvironment
 from Environments.environment import Environment
-from Agents.q_agent import Q_Agent as Agent
+from Agents.ddpg_agent import DDPG_Agent
 from rl_glue import RLGlue
 import numpy as np
 import torch
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import gym
 import os
+
+def update_agent_parameters(environment_parameters, agent_parameters):
+    env = gym.make(environment_parameters['gym_environment'])
+    network_config = agent_parameters['network_config']
+    action_high = env.action_space.high
+    action_low = env.action_space.low
+    action_dim = len(action_low)
+    state_dim = len(env.observation_space.sample())
+    action_lim = []
+    for low, high in zip(action_low, action_high):
+        action_lim.append([low, high])
+    action_lim = np.array(action_lim, dtype='float32')
+
+    agent_parameters['network_config']['state_dim'] = state_dim
+    agent_parameters['network_config']['action_dim'] = action_dim
+    agent_parameters['network_config']['action_lim'] = action_lim
+
+    return agent_parameters
 
 def run_experiment(environment, agent, environment_parameters, agent_parameters, experiment_parameters):
     
@@ -43,7 +62,8 @@ def run_experiment(environment, agent, environment_parameters, agent_parameters,
     np.save(path, agent_sum_reward)
     x = np.load(path)
     plt.plot(np.arange(experiment_parameters['num_episodes']), x[0])
-    plt.savefig(f'sum_rewards.png')
+    gym_name = env_info['gym_environment']
+    plt.savefig(f'{gym_name}_sum_rewards.png')
 
 def main():
     # Run Experiment
@@ -86,13 +106,17 @@ def main():
         'minibatch_size': 8,
         'num_replay_updates_per_step': 4,
         'gamma': 0.99,
+        'tau': 0.01,
         'checkpoint_dir': 'model_weights'
     }
-    current_agent = Agent
-    agent_parameters = update_agent_parameters(current_env(), agent_parameters)
+    current_agent = DDPG_Agent
+    agent_parameters = update_agent_parameters(environment_parameters, agent_parameters)
+    # run experiment on pendulum-v0
+    run_experiment(current_env, current_agent, environment_parameters, agent_parameters, experiment_parameters)
+    # run experiment on BipedalWalker-v3
+    environment_parameters['gym_environment'] = "BipedalWalker-v3"
+    agent_parameters = update_agent_parameters(environment_parameters, agent_parameters)
 
-    # os.makedirs(os.path.sep.join(experiment_parameters['model_weights_save_path'].split(os.path.sep)[:-1]), exist_ok=True)
-    # run experiment
     run_experiment(current_env, current_agent, environment_parameters, agent_parameters, experiment_parameters)
 
 if __name__ == '__main__':
