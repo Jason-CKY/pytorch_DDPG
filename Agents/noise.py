@@ -7,7 +7,7 @@ https://github.com/vy007vikas/PyTorch-ActorCriticRL/blob/master/utils.py
 import numpy as np
 
 class OUNoise(object):
-    def __init__(self, action_dim, mu=0.0, theta=0.15, sigma=0.3):
+    def __init__(self, action_dim, mu=0.0, theta=0.15, sigma=0.2):
         self.mu           = mu
         self.theta        = theta
         self.sigma        = sigma

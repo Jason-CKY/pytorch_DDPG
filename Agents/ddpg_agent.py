@@ -37,13 +37,14 @@ class DDPG_Agent(BaseAgent):
         self.actor = Actor(agent_config['network_config']).to(self.device)
         self.actor_target = Actor(agent_config['network_config']).to(self.device)
         self.actor_target.load_state_dict(self.actor.state_dict())
+
         self.critic = Critic(agent_config['network_config']).to(self.device)
         self.critic_target = Critic(agent_config['network_config']).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         optim_config = agent_config['optimizer_config']
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=optim_config['step_size'], betas=optim_config['betas'])
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=optim_config['step_size'], betas=optim_config['betas'])
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=optim_config['actor_lr'])
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=optim_config['critic_lr'], weight_decay=optim_config['weight_decay'])
         self.num_replay = agent_config['num_replay_updates_per_step']
         self.discount = agent_config['gamma']
         self.tau = agent_config['tau']
@@ -84,16 +85,16 @@ class DDPG_Agent(BaseAgent):
         # ------------------- optimize critic ----------------------------
         Qvals = self.critic(states, actions)
         next_actions = self.actor_target(next_states)
-        next_Q = self.critic_target(next_states, next_actions.detach())
-        Qprime = rewards + self.discount * next_Q
+        next_Q = self.critic_target(next_states, next_actions) * (1-terminals)
+        Qprime = rewards + (self.discount * next_Q)
         # Qprime = Qprime.float()
-        critic_loss = F.smooth_l1_loss(Qprime, Qvals)
+        critic_loss = F.mse_loss(Qvals, Qprime)
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
 
         # ------------------- optimize actor ----------------------------
-        policy_loss = -1*self.critic(states, self.actor(states)).mean()
+        policy_loss = -self.critic(states, self.actor(states)).mean()
         self.actor_optimizer.zero_grad()
         policy_loss.backward()
         self.actor_optimizer.step()
@@ -105,7 +106,7 @@ class DDPG_Agent(BaseAgent):
         for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
             target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
 
-    def policy(self, state):
+    def policy(self, state, add_noise=True):
         """
         Args:
             state (Numpy array)/(torch tensor)/(list): the state
@@ -118,11 +119,15 @@ class DDPG_Agent(BaseAgent):
         state = torch.tensor(state).to(self.device).float()
         if state.dim() == 1:
             state = state.unsqueeze(0)
-            action = self.actor(state).cpu().detach().numpy()[0]
+            with torch.no_grad():
+                action = self.actor(state).cpu().detach().numpy()[0]
         else:
-            action = self.actor(state).cpu().detach().numpy()
+            with torch.no_grad():
+                action = self.actor(state).cpu().detach().numpy()
 
-        action = self.noise.get_action(action)  # add noise
+        if add_noise:
+            action = self.noise.get_action(action)  # add noise
+
         action = np.clip(action, -1, 1)         # clip to tanh range [-1, 1]
                 
         return action
@@ -232,12 +237,18 @@ class DDPG_Agent(BaseAgent):
         self.critic.eval()
         self.critic_target.eval()
     
-    def save_checkpoint(self, episode_num):
+    def save_checkpoint(self, episode_num, save_best=False, solved=False):
         """Saving networks and optimizer paramters to a file in 'checkpoint_dir'
         Args:
             episode_num: episode number of the current session
         """
-        checkpoint_name = os.path.join(self.checkpoint_dir, f"ep_{episode_num}_step_{self.episode_steps}.pt")
+        if save_best:
+            checkpoint_name = os.path.join(self.checkpoint_dir, "best.pth")
+        elif solved:
+            checkpoint_name = os.path.join(self.checkpoint_dir, "solved.pth")
+        else:
+            checkpoint_name = os.path.join(self.checkpoint_dir, f"ep_{episode_num}_step_{self.episode_steps}.pth")
+        
         print('saving checkpoint...')
         checkpoint = {
             'actor': self.actor.state_dict(),
@@ -256,7 +267,7 @@ class DDPG_Agent(BaseAgent):
         Returns:
             the latest saved model weights
         """
-        files = [fname for fname in os.listdir(self.checkpoint_dir) if fname.endswith(".pt")]
+        files = [fname for fname in os.listdir(self.checkpoint_dir) if fname.endswith(".pth")]
         filepaths = [os.path.join(self.checkpoint_dir, filepath) for filepath in files]
         latest_file = max(filepaths, key=os.path.getctime)
         return latest_file
@@ -282,7 +293,7 @@ class DDPG_Agent(BaseAgent):
             self.critic_target.load_state_dict(checkpoint['critic_target'])
             self.critic_optimizer.load_state_dict(checkpoint['critic_optimizer'])
 
-            print('checkpoint loaded')
+            print('checkpoint loaded at {}'.format(checkpoint_path))
         else:
             raise OSError("Checkpoint file not found.")    
 
