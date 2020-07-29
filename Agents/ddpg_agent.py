@@ -83,11 +83,12 @@ class DDPG_Agent(BaseAgent):
         terminals = torch.tensor(terminals).to(self.device).float()
         
         # ------------------- optimize critic ----------------------------
+        with torch.no_grad():
+            next_actions = self.actor_target(next_states)
+            next_Q = self.critic_target(next_states, next_actions) * (1-terminals)
+            Qprime = rewards + (self.discount * next_Q)
+
         Qvals = self.critic(states, actions)
-        next_actions = self.actor_target(next_states)
-        next_Q = self.critic_target(next_states, next_actions) * (1-terminals)
-        Qprime = rewards + (self.discount * next_Q)
-        # Qprime = Qprime.float()
         critic_loss = F.mse_loss(Qvals, Qprime)
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
