@@ -71,7 +71,7 @@ def run_experiment(environment, agent, environment_parameters, agent_parameters,
         print(f"starting from episode {starting_episode}")
 
     
-    for episode in tqdm(range(1 + starting_episode, experiment_parameters["num_episodes"]+1+starting_episode)):
+    for episode in tqdm(range(1 + starting_episode, experiment_parameters["num_episodes"]+1)):
         # run episode
         rl_glue.rl_episode(experiment_parameters["timeout"])
 
