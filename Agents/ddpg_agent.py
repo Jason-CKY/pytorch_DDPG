@@ -238,14 +238,12 @@ class DDPG_Agent(BaseAgent):
         self.critic.eval()
         self.critic_target.eval()
     
-    def save_checkpoint(self, episode_num, save_best=False, solved=False):
+    def save_checkpoint(self, episode_num, solved=False):
         """Saving networks and optimizer paramters to a file in 'checkpoint_dir'
         Args:
             episode_num: episode number of the current session
         """
-        if save_best:
-            checkpoint_name = os.path.join(self.checkpoint_dir, "best.pth")
-        elif solved:
+        if solved:
             checkpoint_name = os.path.join(self.checkpoint_dir, "solved.pth")
         else:
             checkpoint_name = os.path.join(self.checkpoint_dir, f"ep_{episode_num}_step_{self.episode_steps}.pth")

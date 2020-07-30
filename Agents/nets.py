@@ -23,7 +23,6 @@ class Critic(nn.Module):
         self.fc1 = nn.Linear(state_dim, h1)
         self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
         self.fc1.bias.data = fanin_init(self.fc1.bias.data.size())
-        self.bn1 = nn.BatchNorm1d(h1)
 
         self.fc2 = nn.Linear(h1+action_dim, h2)
         self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
@@ -39,7 +38,7 @@ class Critic(nn.Module):
             states: pytorch tensor of shape [n, state_dim]
             actions: pytorch tensor of shape [n, action_dim]
         '''
-        s1 = F.relu(self.bn1(self.fc1(states)))
+        s1 = F.relu(self.fc1(states))
         x = torch.cat([s1, actions], dim=1)
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
@@ -63,12 +62,10 @@ class Actor(nn.Module):
         self.fc1 = nn.Linear(state_dim, h1)
         self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
         self.fc1.bias.data = fanin_init(self.fc1.bias.data.size())
-        self.bn1 = nn.BatchNorm1d(h1)
 
         self.fc2 = nn.Linear(h1, h2)
         self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
         self.fc2.bias.data = fanin_init(self.fc2.bias.data.size())
-        self.bn2 = nn.BatchNorm1d(h2)
 
         self.fc3 = nn.Linear(h2, action_dim)
         self.fc3.weight.data.uniform_(-3e-3, 3e-3)
@@ -79,7 +76,7 @@ class Actor(nn.Module):
         Args:
             states: pytorch tensor of shape [n, state_dim]
         '''
-        x = F.relu(self.bn1(self.fc1(states)))
-        x = F.relu(self.bn2(self.fc2(x)))
+        x = F.relu(self.fc1(states))
+        x = F.relu(self.fc2(x))
         x = F.torch.tanh(self.fc3(x))
         return x
