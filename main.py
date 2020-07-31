@@ -63,11 +63,15 @@ def run_experiment(environment, agent, environment_parameters, agent_parameters,
     # load checkpoint if any
     if experiment_parameters['load_checkpoint'] is not None:
         rl_glue.agent.load_checkpoint(experiment_parameters['load_checkpoint'])
-        fname = experiment_parameters['load_checkpoint'].split(os.path.sep)[-1]
-        starting_episode = int(fname.split('_')[1])
         agent_sum_reward, average_sum_reward = np.load(npy_path)
         agent_sum_reward = list(agent_sum_reward)
         average_sum_reward = list(average_sum_reward)
+        fname = experiment_parameters['load_checkpoint'].split(os.path.sep)[-1]
+        try:
+            starting_episode = int(fname.split('_')[1])
+        except IndexError:
+            starting_episode = len(agent_sum_reward)
+
         print(f"starting from episode {starting_episode}")
 
     
@@ -77,18 +81,19 @@ def run_experiment(environment, agent, environment_parameters, agent_parameters,
 
         episode_reward = rl_glue.rl_agent_message("get_sum_reward")
         agent_sum_reward.append(episode_reward)
-        print('Episode {}/{} | Reward {}'.format(episode, experiment_parameters['num_episodes'], episode_reward))
+        if episode % experiment_parameters['print_freq'] == 0:
+            print('Episode {}/{} | Reward {}'.format(episode, experiment_parameters['num_episodes'], episode_reward))
 
         average = get_average(agent_sum_reward)
         average_sum_reward.append(average)
 
         if episode % experiment_parameters['checkpoint_freq'] == 0:
-            rl_glue.agent.save_checkpoint(episode + starting_episode)
+            rl_glue.agent.save_checkpoint(episode)
             savefig(agent_sum_reward, average_sum_reward, npy_path, fig_path, gym_name)
         
         if env_info['solved_threshold'] is not None and average >= env_info['solved_threshold']:
             print("Task Solved with reward = {}".format(episode_reward))
-            rl_glue.agent.save_checkpoint(episode + starting_episode, solved=True)
+            rl_glue.agent.save_checkpoint(episode, solved=True)
             break
 
     savefig(agent_sum_reward, average_sum_reward, npy_path, fig_path, gym_name)
@@ -100,7 +105,8 @@ def main():
     experiment_parameters = {
         "num_episodes" : 500,
         "checkpoint_freq": 100,
-        "load_checkpoint": None,    # None to start new experiment, path to checkpoint to resume training
+        "print_freq": 1,
+        "load_checkpoint": 'model_weights\MountainCarContinuous-v0\solved.pth',    # None to start new experiment, path to checkpoint to resume training
         # OpenAI Gym environments allow for a timestep limit timeout, causing episodes to end after 
         # some number of timesteps.
         "timeout" : 1600
@@ -108,8 +114,8 @@ def main():
 
     # Environment parameters
     environment_parameters = {
-        "gym_environment": 'LunarLanderContinuous-v2',
-        'solved_threshold': 200,
+        "gym_environment": 'MountainCarContinuous-v0',
+        'solved_threshold': 150,
         'seed': 0
     }
 

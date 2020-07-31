@@ -1,5 +1,4 @@
 .vscode
 __pycache__
-test.py
 plot.py
 model_weights
