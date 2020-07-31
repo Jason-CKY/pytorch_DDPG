@@ -44,10 +44,10 @@ Critic Network consists of a 3-layer neural network taking into input the state 
 Input layer and intermediate layers uses ReLU activation function.
 
 ## Actor Optimization
-Actor network is optimized by minimizing -Q(s, Pi(s)).mean()
+Actor network is optimized by minimizing **-Q(s, Pi(s)).mean()**
 
 ## Critic Optimization
-Critic network is optimized by minimizing mse_loss(r+ γ*Q(s', Pi(s')) - Q(s, a))
+Critic network is optimized by minimizing **mse_loss(r+ γ*Q(s', Pi(s')) - Q(s, a))**
 
 ## Initialization Details
 
