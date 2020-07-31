@@ -60,7 +60,7 @@ class DDPG_Agent(BaseAgent):
 
         checkpoint_dir = agent_config.get('checkpoint_dir')
         if checkpoint_dir is None:
-            self.checkpoint_dir = 'saved_models'
+            self.checkpoint_dir = 'model_weights'
         else:
             self.checkpoint_dir = checkpoint_dir
         
