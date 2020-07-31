@@ -106,7 +106,7 @@ def main():
         "num_episodes" : 500,
         "checkpoint_freq": 100,
         "print_freq": 1,
-        "load_checkpoint": 'model_weights\MountainCarContinuous-v0\solved.pth',    # None to start new experiment, path to checkpoint to resume training
+        "load_checkpoint": None    # None to start new experiment, path to checkpoint to resume training
         # OpenAI Gym environments allow for a timestep limit timeout, causing episodes to end after 
         # some number of timesteps.
         "timeout" : 1600
@@ -115,7 +115,7 @@ def main():
     # Environment parameters
     environment_parameters = {
         "gym_environment": 'MountainCarContinuous-v0',
-        'solved_threshold': 150,
+        'solved_threshold': 90,
         'seed': 0
     }
 
