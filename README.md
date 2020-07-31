@@ -91,9 +91,8 @@ python test.py
 usage: test.py [-h] [--env ENV] [--checkpoint CHECKPOINT] [--gif]
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --env ENV             Environment name
-  --checkpoint CHECKPOINT
-                        Name of checkpoint.pth file under model_weights/env/
-  --gif                 Save rendered episode as a gif to model_weights/env/episode.gif
+  -h, --help                show this help message and exit
+  --env ENV                 Environment name
+  --checkpoint CHECKPOINT   Name of checkpoint.pth file under model_weights/env/
+  --gif                     Save rendered episode as a gif to model_weights/env/episode.gif
 ```
