@@ -27,6 +27,11 @@ Base environment and agent is written in [RL-Glue standard](http://www.jmlr.org/
 <td><img src = 'model_weights\Pendulum-v0\sum_rewards.png'> 
 <td><img src = 'model_weights\Pendulum-v0\recording.gif'>
 </tr>
+<tr>
+<td> BipedalWalker-v3 </td>
+<td><img src = 'model_weights\BipedalWalker-v3\sum_rewards.png'> 
+<td><img src = 'model_weights\BipedalWalker-v3\recording.gif'>
+</tr>
 </table>
 
 ## DDPG Algorithm
@@ -94,5 +99,5 @@ optional arguments:
   -h, --help                show this help message and exit
   --env ENV                 Environment name
   --checkpoint CHECKPOINT   Name of checkpoint.pth file under model_weights/env/
-  --gif                     Save rendered episode as a gif to model_weights/env/episode.gif
+  --gif                     Save rendered episode as a gif to model_weights/env/recording.gif
 ```

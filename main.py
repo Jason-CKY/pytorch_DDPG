@@ -72,6 +72,8 @@ def run_experiment(environment, agent, environment_parameters, agent_parameters,
         except IndexError:
             starting_episode = len(agent_sum_reward)
 
+        agent_sum_reward = agent_sum_reward[:starting_episde]
+        average_sum_reward = average_sum_reward[:starting_episode]
         print(f"starting from episode {starting_episode}")
 
     

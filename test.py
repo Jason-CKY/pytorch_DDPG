@@ -104,7 +104,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", type=str, default="LunarLanderContinuous-v2", help="Environment name")
     parser.add_argument("--checkpoint", type=str, help="Name of checkpoint.pth file under model_weights/env/")
-    parser.add_argument("--gif", action='store_true', help='Save rendered episode as a gif to model_weights/env/episode.gif')
+    parser.add_argument("--gif", action='store_true', help='Save rendered episode as a gif to model_weights/env/recording.gif')
     opt = parser.parse_args()
 
     main(opt)
